@@ -1,0 +1,99 @@
+'''
+In this project, you will visualize the feelings and language used in a set of
+Tweets. This starter code loads the appropriate libraries and the Twitter data you'll
+need!
+'''
+
+import json
+from textblob import TextBlob
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+
+#Search term used for this tweet
+#We want to filter this out!
+tweetSearch = "automation"
+
+#Get the JSON data
+tweetFile = open("tweets_small.json", "r")
+tweetData = json.load(tweetFile)
+tweetFile.close()
+
+# Continue your program below!
+polarities = []
+subjectivities = []
+
+#iterating through the json file
+for i in tweetData:
+    tb = TextBlob(i['text'])
+    polarity = tb.polarity
+    polarities.append(polarity)
+#calculating the average for polarity
+sum = 0
+numItem = len(polarities)
+for i in polarities:
+    sum += i
+average = sum/numItem
+print(average)
+
+#calculating the average for subjectivity
+for i in tweetData:
+    tb = TextBlob(i['text'])
+    subjectivity = tb.subjectivity
+    subjectivities.append(subjectivity)
+
+sum = 0
+numItem = len(subjectivities)
+for i in subjectivities:
+    sum += i
+average = sum/numItem
+print(average)
+
+
+#Create the Graph
+plt.hist(polarities, bins=[-1.1, -.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1.1])
+plt.xlabel('Polarities')
+plt.ylabel('Number of Tweets')
+plt.title('Histogram of Tweet Polarity')
+plt.axis([-1.1, 1.1, 0, 100])
+plt.grid(True)
+plt.show()
+
+
+#Combine All the Tweet Texts
+combinedTweets = ""
+for tweet in tweetData:
+	combinedTweets += tweet['text']
+
+#Create a Combined Tweet Blob
+tweetblob = TextBlob(combinedTweets)
+
+#This can be useful to see what's possible
+#to do with a Textlob object
+# print(dir(tweetblob))
+
+#Filter Words
+wordsToFilter = ["about", "https", "in", "the", "thing", "will", "could", tweetSearch]
+filteredDictionary = dict()
+
+for word in tweetblob.words:
+	#skip tiny words
+	if len(word) < 2:
+		continue
+	#skip words with random characters or numbers
+	if not word.isalpha():
+		continue
+	#skip words in our filter
+	if word.lower() in wordsToFilter:
+		continue
+	#don't want lower case words smaller than 5 letters
+	if len(word) < 5 and word.upper() != word:
+		continue;
+
+	#Try lower case only, try with upper case!
+	filteredDictionary[word.lower()] = tweetblob.word_counts[word.lower()]
+
+#Create the word cloud
+wordcloud = WordCloud().generate_from_frequencies(filteredDictionary)
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis("off")
+plt.show()
